@@ -108,6 +108,34 @@ export async function leaveRoster(formData: FormData): Promise<void> {
   redirect('/');
 }
 
+/**
+ * Removes one of today's score submissions (e.g. a mistaken entry). There's
+ * no login here, so this isn't restricted to "your own" submission - anyone
+ * can remove any of today's entries, same trust model as the rest of the
+ * app. Blocked once that game is finalized, so it can't undo a result that's
+ * already been decided - re-submit instead if a correction is still needed.
+ */
+export async function removeSubmission(formData: FormData): Promise<void> {
+  const game = formData.get('game');
+  const userId = String(formData.get('userId') || '').trim();
+
+  if (isGame(game) && userId) {
+    const store = await getStore();
+    const playDate = todayKeyIn(config.timezone);
+
+    if (await store.getDailyResult(playDate, game)) {
+      redirect(
+        `/?error=${encodeURIComponent(`${GAME_LABELS[game]} for today is already finalized, so this can't be removed.`)}`,
+      );
+    }
+
+    await store.removeScore(playDate, game, userId);
+    revalidatePath('/');
+  }
+
+  redirect('/');
+}
+
 /** Closes today's result for a game right now, with whatever scores are in so far. */
 export async function forceFinalize(formData: FormData): Promise<void> {
   const game = formData.get('game');

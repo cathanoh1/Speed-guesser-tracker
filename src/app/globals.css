@@ -326,6 +326,54 @@ section + section {
   font-size: 0.9rem;
 }
 
+.screenshot-preview {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px;
+  margin-bottom: 8px;
+  background: var(--page-plane);
+}
+
+.screenshot-preview img {
+  display: block;
+  max-width: 100%;
+  max-height: 220px;
+  border-radius: 6px;
+  margin: 0 auto 8px;
+}
+
+.screenshot-preview-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.82rem;
+}
+
+.screenshot-preview-name {
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.screenshot-preview-meta button {
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-primary);
+  border-radius: 999px;
+  padding: 3px 10px;
+  font-size: 0.78rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.screenshot-preview-meta button:hover {
+  background: var(--status-critical-bg);
+  color: var(--status-critical);
+  border-color: transparent;
+}
+
 .submit-button {
   width: 100%;
   font: inherit;

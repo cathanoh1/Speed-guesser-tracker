@@ -5,7 +5,7 @@ import { formatFriendlyDate, todayKeyIn } from '@/domain/dateUtil';
 import { buildStandings, computeDailyStatus } from '@/domain/leaderboard';
 import { ScoreStore } from '@/domain/store';
 import { GAME_LABELS, GAMES, type Game } from '@/domain/types';
-import { forceFinalize, joinRoster, leaveRoster } from './actions';
+import { forceFinalize, joinRoster, leaveRoster, removeSubmission } from './actions';
 
 function firstParam(value: string | string[] | undefined): string | null {
   if (Array.isArray(value)) return value[0] ?? null;
@@ -136,6 +136,7 @@ export default async function HomePage(props: PageProps<'/'>) {
                     Score
                   </th>
                   <th scope="col">Proof</th>
+                  <th scope="col"></th>
                 </tr>
               </thead>
               <tbody>
@@ -150,6 +151,21 @@ export default async function HomePage(props: PageProps<'/'>) {
                         <a href={entry.screenshotUrl} target="_blank" rel="noreferrer">
                           View screenshot
                         </a>
+                      </td>
+                      <td>
+                        {!todaysFinalized[entry.game] && (
+                          <form action={removeSubmission}>
+                            <input type="hidden" name="game" value={entry.game} />
+                            <input type="hidden" name="userId" value={entry.userId} />
+                            <button
+                              type="submit"
+                              className="nav-link nav-link--secondary"
+                              style={{ fontSize: '0.78rem', padding: '4px 10px' }}
+                            >
+                              Remove
+                            </button>
+                          </form>
+                        )}
                       </td>
                     </tr>
                   ))}

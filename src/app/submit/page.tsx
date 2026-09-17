@@ -3,6 +3,7 @@ import { getDb } from '@/db/client';
 import { ScoreStore } from '@/domain/store';
 import { GAME_LABELS, GAMES } from '@/domain/types';
 import { submitScore } from '../actions';
+import { ScreenshotField } from './ScreenshotField';
 
 function firstParam(value: string | string[] | undefined): string | null {
   if (Array.isArray(value)) return value[0] ?? null;
@@ -70,11 +71,7 @@ export default async function SubmitPage(props: PageProps<'/submit'>) {
           <input type="number" id="score" name="score" min={0} step={1} required placeholder="e.g. 42150" />
         </div>
 
-        <div className="field">
-          <label htmlFor="screenshot">Screenshot (proof)</label>
-          <input type="file" id="screenshot" name="screenshot" accept="image/*" required />
-          <span className="hint">Required, up to 4.5 MB. Everyone on the leaderboard can view it.</span>
-        </div>
+        <ScreenshotField />
 
         <button type="submit" className="submit-button">
           Submit score
