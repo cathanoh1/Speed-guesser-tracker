@@ -8,6 +8,32 @@ At a high level: **host the app somewhere with a public HTTPS URL → register
 an Azure Bot that points at it → package a Teams app manifest → add it to a
 group chat.**
 
+## Cost and where to host it
+
+**GitHub itself can't host the running app.** GitHub Pages only serves
+static files - it can't run the always-on Node process this needs (to accept
+the Bot Framework's POSTs and write to the SQLite file), and GitHub Actions
+runs short-lived jobs rather than an always-listening server. The code lives
+in this repo; it still needs to be deployed to an actual host - Azure App
+Service (pairs naturally with the Azure Bot resource below), Render,
+Fly.io, Railway, or your own machine are all fine choices. Whichever you
+pick, check that its free/cheap tier gives you a **persistent disk** - some
+wipe the filesystem on every restart or redeploy, which would silently reset
+the leaderboard.
+
+Realistic cost for a small group:
+
+| Piece | Cost |
+|---|---|
+| Hosting the app | Often **$0** - traffic for a friend group is a handful of requests a day, well within most free/hobby tiers |
+| Azure Bot registration (Teams channel) | No meaningful per-message charge for standard Teams channel usage |
+| Screenshot reading (optional) | The one genuine ongoing cost - a real, small Anthropic API call per screenshot on your own account (very roughly a cent or two each at Claude Opus 5's current rates - so a handful of dollars a month for an active group) |
+| Everything else | Free - `score timeguesser 42150` works with zero API cost if you skip screenshot reading entirely |
+
+So the floor is $0 if you self-host (or use a free tier) and skip
+`ANTHROPIC_API_KEY` - only the screenshot-reading convenience scales with
+usage.
+
 ## 0. Prerequisites
 
 - An Azure subscription (a free trial works fine for this).
