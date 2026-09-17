@@ -1,10 +1,9 @@
 # Deploying
 
-This needs three free accounts (Vercel, Turso, and optionally Microsoft
-Teams admin/Power Automate access if you want announcements) and about 15
-minutes. Unlike the bot-based version of this app, there's no Azure
-resource, no app registration, and no Teams app to sideload - the whole
-setup is web hosting plus a database.
+This needs two free accounts (Vercel and Turso) and about 10 minutes. This
+is a standalone website with no chat-platform integration, so there's no
+Azure resource, no app registration, and nothing to sideload anywhere - the
+whole setup is web hosting plus a database.
 
 ## Cost
 
@@ -13,11 +12,9 @@ setup is web hosting plus a database.
 | Vercel hosting | Free tier comfortably covers a small group's traffic |
 | Turso (database) | Free tier is generous for this scale (a handful of writes a day) |
 | Vercel Blob (screenshot storage) | Free tier includes storage and bandwidth well beyond a group's daily screenshots |
-| Teams announcements | Free either way (native webhook or Power Automate) |
 
-There is no ongoing per-use API cost in this version - the earlier
-Claude-vision screenshot reading has been replaced with plain screenshot
-storage, so the whole thing runs at **$0** for a normal-sized friend group
+There is no ongoing per-use API cost - screenshots are stored, not read or
+verified by anything, so this runs at **$0** for a normal-sized friend group
 on free tiers.
 
 ## 1. Deploy to Vercel
@@ -56,51 +53,13 @@ In your Vercel project → **Storage** tab → **Create Database** → **Blob**.
 Once created and connected to the project, Vercel automatically sets the
 `BLOB_READ_WRITE_TOKEN` environment variable - no manual copying needed.
 
-## 4. Set the remaining environment variables
+## 4. Set the timezone
 
-In Vercel project settings → **Environment Variables**:
+In Vercel project settings → **Environment Variables**, add `TIMEZONE` -
+your group's IANA timezone, e.g. `Europe/London` (this is what it defaults
+to if left unset). Redeploy once more so it's picked up.
 
-- `TIMEZONE` - your group's IANA timezone, e.g. `Europe/London`. Defaults to
-  `Europe/London` if unset.
-- `PUBLIC_BASE_URL` - your deployment's URL, e.g.
-  `https://speed-guesser-tracker.vercel.app` (no trailing slash). Used to
-  build links in Teams announcements.
-
-Redeploy once more so every environment variable is picked up together.
-
-## 5. (Optional) Get announcements into Teams
-
-Set `TEAMS_WEBHOOK_URL` to a URL that accepts a POST of JSON, and the app
-will post a card there whenever a game finalizes or a Grand Slam happens.
-Skip this entirely if you're happy with everyone just checking the website -
-nothing else depends on it.
-
-There are two ways to get that URL, and which one applies depends on
-whether your group has a **Team channel** or a bare **group chat**:
-
-### If you have a Team channel
-
-Teams' native **Incoming Webhook** connector is scoped to channels. In the
-channel: **⋯ (more options) → Connectors → Incoming Webhook → Configure**,
-give it a name, and copy the generated URL into `TEAMS_WEBHOOK_URL`.
-
-### If you only have a group chat
-
-Incoming Webhooks aren't available directly on a plain group chat. Use a
-small **Power Automate** flow instead:
-
-1. At [make.powerautomate.com](https://make.powerautomate.com), create an
-   **Instant cloud flow** triggered by **"When an HTTP request is received."**
-2. Add a **Microsoft Teams → Post message in a chat or channel** action,
-   targeting your group chat, with the message text mapped from the
-   trigger's request body (e.g. its `text` field).
-3. Save the flow - it generates an HTTP POST URL. Put that URL in
-   `TEAMS_WEBHOOK_URL`.
-
-Either way, the app doesn't need to know which one you used - both are just
-"a URL that accepts a POST of JSON."
-
-## 6. Share the link
+## 5. Share the link
 
 Send the deployed URL to your group. `/` is the leaderboard, `/submit` is
 where scores go in - link both, or just `/` and let people click through.
@@ -119,12 +78,6 @@ actual timezone - it defaults to `Europe/London`.
 submit - check the roster on the homepage, have the missing person click
 their ✕ to leave, or use the **Finalize now** button on that game's tile to
 close it with whatever's in so far.
-
-**Teams announcements aren't showing up.** Double check `TEAMS_WEBHOOK_URL`
-is set and that you used the right mechanism for a channel vs. a group chat
-(step 5) - a webhook URL from the wrong scope will silently fail. Server
-logs (Vercel project → **Logs**) will show the exact POST failure if one
-occurred.
 
 **Data resets after a deploy.** This means `TURSO_DATABASE_URL` isn't set -
 without it, the app falls back to a local file that doesn't persist across

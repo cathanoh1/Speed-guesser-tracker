@@ -12,10 +12,13 @@ src/app/actions.ts ('use server')
   |-- src/lib/blob.ts          uploads the screenshot to Vercel Blob
   |-- src/domain/store.ts      reads/writes Turso (libsql)
   |-- src/domain/finalize.ts   decides whether a game just closed + who won
-  |-- src/lib/teamsWebhook.ts  posts an announcement, if TEAMS_WEBHOOK_URL is set
   v
 Turso (libsql) - a single global roster/leaderboard, no per-group scoping
 ```
+
+This is a fully standalone website - it has no integration with Microsoft
+Teams, Slack, or any other chat platform. Sharing results with a group means
+sharing the deployed URL.
 
 Reads (the homepage, the submit page's player list) are plain `async`
 Server Components querying the database directly - no separate API layer,
@@ -24,9 +27,7 @@ you opt in with `'use cache'`, so the leaderboard is live on every request.
 
 ## Why no login
 
-Teams-bot identity was free in the earlier version of this app (Teams itself
-guarantees who sent a message). A website has no such guarantee, and this
-app deliberately doesn't build real authentication for it: you identify
+This app deliberately doesn't build real authentication: you identify
 yourself by typing your name, nothing more. That means someone could type
 someone else's name - the mitigation is the **required screenshot**, which
 makes every score checkable by anyone looking at the leaderboard, and the
@@ -79,23 +80,5 @@ Every score requires a screenshot, uploaded to Vercel Blob (`src/lib/blob.ts`)
 and linked from the "Today's submissions" table on the homepage. Nothing
 reads the image or checks the number in it against what was typed - the
 screenshot exists so the group itself can spot-check a score if they're
-curious, which is a deliberate, much simpler alternative to the previous
-version's Claude-vision screenshot parsing. It also means there's no
-ongoing per-screenshot API cost.
-
-## Teams announcements (optional)
-
-`src/lib/teamsWebhook.ts` POSTs a plain JSON payload (the classic
-[Office 365 "MessageCard"](https://learn.microsoft.com/microsoftteams/platform/webhooks-and-connectors/how-to/connectors-using)
-shape) to `TEAMS_WEBHOOK_URL` whenever a game finalizes or a Grand Slam
-happens. That URL can be either:
-
-- A native Teams **Incoming Webhook** - simple, but scoped to a **Team
-  channel**, not a bare group chat (see docs/DEPLOYMENT.md).
-- A **Power Automate** flow's "When an HTTP request is received" trigger,
-  relaying into a plain group chat via "Post message in a chat or channel."
-
-Both are just "a URL that accepts a POST of JSON," so nothing in the app
-needs to know or care which one is actually configured - and if neither is
-set up, announcements are silently skipped (logged, never thrown) without
-affecting score submission, which is the feature that actually matters.
+curious. There's no ongoing per-screenshot API cost - nothing reads or
+verifies the image, it's just stored and linked.

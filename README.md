@@ -1,11 +1,11 @@
 # 🏆 Speed Guesser Tracker
 
-A website that tracks a group's daily **TimeGuesser** and **Speed Quiz**
-results. Everyone submits their score with a screenshot as proof, the site
-tracks who's still got a score to submit, and once everyone's in for a game
-it crowns that day's winner - if the same person wins both, that's a **Grand
-Slam**. Results can optionally be posted back into a Microsoft Teams chat,
-and the leaderboard itself is a page anyone can open.
+A standalone website that tracks a group's daily **TimeGuesser** and
+**Speed Quiz** results. Everyone submits their score with a screenshot as
+proof, the site tracks who's still got a score to submit, and once
+everyone's in for a game it crowns that day's winner - if the same person
+wins both, that's a **Grand Slam**. The leaderboard itself is a page anyone
+can open.
 
 There's no login system - you just type your name. See
 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for why, and the tradeoff that
@@ -19,17 +19,13 @@ comes with it.
 - **"Who's still in?"** - the homepage shows who has submitted each game
   today and who hasn't, at a glance.
 - **Automatic daily winners** - the moment every active player has a score
-  in for a game, that game closes and the winner is announced (ties are
-  handled as joint winners). A "Finalize now" button closes it early if
-  someone's away and you don't want to wait.
+  in for a game, that game closes and the winner is shown (ties are handled
+  as joint winners). A "Finalize now" button closes it early if someone's
+  away and you don't want to wait.
 - **Grand Slam** - winning both games on the same day is tracked and called
   out specifically.
 - **Shared leaderboard** - always-up-to-date: today's status, all-time
   standings, and recent results, all on one page anyone can open.
-- **Optional Teams announcements** - set one webhook URL and winner/Grand
-  Slam announcements post straight into a Teams chat. See
-  [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for how to get that URL, including
-  a note on group chats vs. channels.
 
 ## How it works
 
@@ -37,8 +33,8 @@ comes with it.
 2. Pick your name (or type a new one to join), choose the game, enter your
    score, and attach a screenshot.
 3. The homepage shows who's still needed for each game today.
-4. Once everyone active has submitted, that game's winner is announced - and
-   a Grand Slam if the same person swept both.
+4. Once everyone active has submitted, that game's winner is shown - and a
+   Grand Slam if the same person swept both.
 5. The leaderboard shows the all-time standings and recent results, always
    live - just open the link.
 
@@ -63,13 +59,11 @@ Copy `.env.example` to `.env.local` and fill in what you have:
 | `TIMEZONE` | Correct day boundaries | An IANA name, e.g. `Europe/London`. Decides when "today" rolls over to "tomorrow" |
 | `TURSO_DATABASE_URL` / `TURSO_AUTH_TOKEN` | Persistence in production | A Turso (SQLite-compatible) database. Falls back to a local file when unset - see [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) |
 | `BLOB_READ_WRITE_TOKEN` | Screenshot uploads | Set automatically when you add Vercel Blob storage to your Vercel project |
-| `PUBLIC_BASE_URL` | Links posted into Teams | The public HTTPS URL this site is deployed at |
-| `TEAMS_WEBHOOK_URL` | Teams announcements (optional) | A Teams Incoming Webhook or Power Automate HTTP-trigger URL. Leave blank to skip - everything else still works |
 
 ## Deploying
 
-Full walkthrough, including Turso and Vercel Blob setup and the two ways to
-get announcements into Teams: **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)**.
+Full walkthrough, including Turso and Vercel Blob setup:
+**[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)**.
 
 ## Development
 
@@ -89,7 +83,7 @@ together and the reasoning behind the roster/finalization/no-login design.
 src/
   domain/       pure scoring, standings, and finalization logic (fully unit tested)
   db/           libsql (Turso) schema + connection
-  lib/          screenshot upload (Vercel Blob) and the Teams webhook poster
+  lib/          screenshot upload (Vercel Blob)
   app/
     page.tsx      the leaderboard (Server Component, reads data live)
     submit/       the score submission form

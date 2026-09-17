@@ -4,13 +4,12 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { config } from '@/config';
 import { getDb } from '@/db/client';
-import { formatFriendlyDate, todayKeyIn } from '@/domain/dateUtil';
+import { todayKeyIn } from '@/domain/dateUtil';
 import { evaluateAndFinalize } from '@/domain/finalize';
 import { ScoreStore } from '@/domain/store';
 import { GAMES, GAME_LABELS, type Game, type ScoreEntry } from '@/domain/types';
 import { normalizeUsername } from '@/domain/username';
 import { ScreenshotTooLargeError, uploadScoreScreenshot } from '@/lib/blob';
-import { announceGrandSlam, announceWinner } from '@/lib/teamsWebhook';
 
 function isGame(value: FormDataEntryValue | null): value is Game {
   return typeof value === 'string' && (GAMES as string[]).includes(value);
@@ -25,15 +24,8 @@ function toSubmitError(message: string): never {
   redirect(`/submit?error=${encodeURIComponent(message)}`);
 }
 
-async function finalizeAndAnnounce(store: ScoreStore, playDate: string, forceGame?: Game): Promise<void> {
-  const outcome = await evaluateAndFinalize(store, playDate, forceGame ? 'manual' : 'auto', forceGame);
-  const friendlyDate = formatFriendlyDate(playDate, config.timezone);
-  for (const { game, result } of outcome.newlyFinalized) {
-    await announceWinner(game, result, friendlyDate);
-  }
-  if (outcome.newGrandSlams.length > 0) {
-    await announceGrandSlam(outcome.newGrandSlams, friendlyDate);
-  }
+async function runFinalization(store: ScoreStore, playDate: string, forceGame?: Game): Promise<void> {
+  await evaluateAndFinalize(store, playDate, forceGame ? 'manual' : 'auto', forceGame);
 }
 
 /** The main action: record a score, with its screenshot as proof. */
@@ -86,7 +78,7 @@ export async function submitScore(formData: FormData): Promise<void> {
     submittedAt: new Date().toISOString(),
   };
   await store.recordScore(entry);
-  await finalizeAndAnnounce(store, playDate);
+  await runFinalization(store, playDate);
 
   revalidatePath('/');
   redirect(`/?submitted=${encodeURIComponent(rawName)}`);
@@ -124,7 +116,7 @@ export async function forceFinalize(formData: FormData): Promise<void> {
     const playDate = todayKeyIn(config.timezone);
     const scores = await store.getScoresForDate(playDate, game);
     if (scores.length > 0) {
-      await finalizeAndAnnounce(store, playDate, game);
+      await runFinalization(store, playDate, game);
       revalidatePath('/');
     }
   }
