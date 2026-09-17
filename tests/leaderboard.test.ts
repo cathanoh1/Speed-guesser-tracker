@@ -7,10 +7,8 @@ import {
 } from '../src/domain/leaderboard';
 import type { DailyResult, GrandSlam, Player, ScoreEntry } from '../src/domain/types';
 
-const CONV = 'conv-1';
-
 function player(userId: string, displayName: string, active = true): Player {
-  return { conversationId: CONV, userId, displayName, active, joinedAt: '2026-01-01T00:00:00Z' };
+  return { userId, displayName, active, joinedAt: '2026-01-01T00:00:00Z' };
 }
 
 function score(
@@ -20,14 +18,12 @@ function score(
   scoreValue: number,
 ): ScoreEntry {
   return {
-    conversationId: CONV,
     playDate: '2026-09-17',
     game,
     userId,
     displayName,
     score: scoreValue,
-    source: 'manual',
-    rawConfidence: null,
+    screenshotUrl: 'https://example.com/proof.png',
     submittedAt: '2026-09-17T09:00:00Z',
   };
 }
@@ -98,7 +94,6 @@ describe('computeWinners', () => {
 
 describe('computeGrandSlamWinners', () => {
   const tgResult = (winners: string[], score = 500): DailyResult => ({
-    conversationId: CONV,
     playDate: '2026-09-17',
     game: 'timeguesser',
     winners: winners.map((id) => ({ userId: id, displayName: id })),
@@ -141,10 +136,10 @@ describe('buildStandings', () => {
     winners: { userId: string; displayName: string }[],
     finalizedAt: string,
   ): DailyResult {
-    return { conversationId: CONV, playDate, game, winners, winningScore: 1000, finalizedAt, finalizedBy: 'auto' };
+    return { playDate, game, winners, winningScore: 1000, finalizedAt, finalizedBy: 'auto' };
   }
   function grandSlam(playDate: string, userId: string, displayName: string, recordedAt: string): GrandSlam {
-    return { conversationId: CONV, playDate, userId, displayName, recordedAt };
+    return { playDate, userId, displayName, recordedAt };
   }
 
   it('tallies wins per game and total wins', () => {

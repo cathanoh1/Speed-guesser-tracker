@@ -13,23 +13,21 @@ export interface FinalizationOutcome {
  * every score submission - it is a no-op once a game is already finalized.
  *
  * `forceGame` finalizes that game immediately with whatever scores exist so
- * far (the `finalize <game>` admin command), regardless of whether every
- * active player has submitted.
+ * far, regardless of whether every active player has submitted.
  */
-export function evaluateAndFinalize(
+export async function evaluateAndFinalize(
   store: ScoreStore,
-  conversationId: string,
   playDate: string,
   finalizedBy: 'auto' | 'manual' = 'auto',
   forceGame?: Game,
-): FinalizationOutcome {
+): Promise<FinalizationOutcome> {
   const outcome: FinalizationOutcome = { newlyFinalized: [], newGrandSlams: [] };
-  const activePlayers = store.listActivePlayers(conversationId);
+  const activePlayers = await store.listActivePlayers();
 
   for (const game of GAMES) {
-    if (store.getDailyResult(conversationId, playDate, game)) continue;
+    if (await store.getDailyResult(playDate, game)) continue;
 
-    const scores = store.getScoresForDate(conversationId, playDate, game);
+    const scores = await store.getScoresForDate(playDate, game);
     const status = computeDailyStatus(activePlayers, scores, playDate).games[game];
     const shouldFinalize = forceGame === game ? scores.length > 0 : status.readyToFinalize;
     if (!shouldFinalize) continue;
@@ -38,7 +36,6 @@ export function evaluateAndFinalize(
     if (!winnerResult) continue;
 
     const result: DailyResult = {
-      conversationId,
       playDate,
       game,
       winners: winnerResult.winners,
@@ -46,21 +43,19 @@ export function evaluateAndFinalize(
       finalizedAt: new Date().toISOString(),
       finalizedBy: forceGame === game ? finalizedBy : 'auto',
     };
-    store.saveDailyResult(result);
+    await store.saveDailyResult(result);
     outcome.newlyFinalized.push({ game, result });
   }
 
   // A Grand Slam only exists once both games are finalized for the same day.
-  const timeguesserResult = store.getDailyResult(conversationId, playDate, 'timeguesser');
-  const speedQuizResult = store.getDailyResult(conversationId, playDate, 'speedquiz');
+  const timeguesserResult = await store.getDailyResult(playDate, 'timeguesser');
+  const speedQuizResult = await store.getDailyResult(playDate, 'speedquiz');
   if (timeguesserResult && speedQuizResult) {
-    const alreadyRecorded = new Set(
-      store.listGrandSlams(conversationId, { playDate }).map((slam) => slam.userId),
-    );
+    const existingSlams = await store.listGrandSlams({ playDate });
+    const alreadyRecorded = new Set(existingSlams.map((slam) => slam.userId));
     for (const candidate of computeGrandSlamWinners(timeguesserResult, speedQuizResult)) {
       if (alreadyRecorded.has(candidate.userId)) continue;
-      store.saveGrandSlam({
-        conversationId,
+      await store.saveGrandSlam({
         playDate,
         userId: candidate.userId,
         displayName: candidate.displayName,

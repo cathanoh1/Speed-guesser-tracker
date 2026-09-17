@@ -1,34 +1,21 @@
-import * as dotenv from 'dotenv';
-
-dotenv.config({ quiet: true });
-
 function stripTrailingSlash(url: string): string {
   return url.replace(/\/+$/, '');
 }
 
-const port = parseInt(process.env.PORT || '3978', 10);
-
 export const config = {
-  port,
+  /** IANA timezone deciding where one "play day" ends and the next begins. */
   timezone: process.env.TIMEZONE || 'Europe/London',
-  dbPath: process.env.DB_PATH || './data/scores.db',
-  publicBaseUrl: stripTrailingSlash(process.env.PUBLIC_BASE_URL || `http://localhost:${port}`),
-  bot: {
-    appType: process.env.MicrosoftAppType || 'MultiTenant',
-    appId: process.env.MicrosoftAppId || '',
-    appPassword: process.env.MicrosoftAppPassword || '',
-    appTenantId: process.env.MicrosoftAppTenantId || '',
+  db: {
+    /** A Turso `libsql://...` URL in production, or a local file for dev/tests. */
+    url: process.env.TURSO_DATABASE_URL || 'file:./data/local.db',
+    authToken: process.env.TURSO_AUTH_TOKEN || '',
   },
-  anthropicApiKey: process.env.ANTHROPIC_API_KEY || '',
+  /** A Teams Incoming Webhook URL (or a Power Automate HTTP-trigger URL) to post
+   * winner/status announcements to. Optional - see docs/DEPLOYMENT.md. */
+  teamsWebhookUrl: process.env.TEAMS_WEBHOOK_URL || '',
+  publicBaseUrl: stripTrailingSlash(process.env.PUBLIC_BASE_URL || 'http://localhost:3000'),
 };
 
-/** True once an Anthropic API key is configured, enabling screenshot parsing. */
-export function isVisionEnabled(): boolean {
-  return config.anthropicApiKey.trim().length > 0;
-}
-
-/** True once Bot Framework credentials are configured. Without these the bot
- * endpoint will reject Teams traffic, but the leaderboard web UI still works. */
-export function isBotConfigured(): boolean {
-  return config.bot.appId.trim().length > 0;
+export function isWebhookConfigured(): boolean {
+  return config.teamsWebhookUrl.trim().length > 0;
 }

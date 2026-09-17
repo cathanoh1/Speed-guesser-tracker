@@ -7,12 +7,9 @@ export const GAME_LABELS: Record<Game, string> = {
   speedquiz: 'Speed Quiz',
 };
 
-export type ScoreSource = 'screenshot' | 'manual';
-export type Confidence = 'high' | 'medium' | 'low';
 export type FinalizedBy = 'auto' | 'manual';
 
 export interface Player {
-  conversationId: string;
   userId: string;
   displayName: string;
   active: boolean;
@@ -20,14 +17,13 @@ export interface Player {
 }
 
 export interface ScoreEntry {
-  conversationId: string;
   playDate: string;
   game: Game;
   userId: string;
   displayName: string;
   score: number;
-  source: ScoreSource;
-  rawConfidence: Confidence | null;
+  /** URL of the screenshot submitted as proof - every score requires one. */
+  screenshotUrl: string;
   submittedAt: string;
 }
 
@@ -37,7 +33,6 @@ export interface PlayerRef {
 }
 
 export interface DailyResult {
-  conversationId: string;
   playDate: string;
   game: Game;
   winners: PlayerRef[];
@@ -47,15 +42,8 @@ export interface DailyResult {
 }
 
 export interface GrandSlam {
-  conversationId: string;
   playDate: string;
   userId: string;
   displayName: string;
   recordedAt: string;
-}
-
-export interface ConversationInfo {
-  conversationId: string;
-  displayName: string | null;
-  lastSeenAt: string;
 }
